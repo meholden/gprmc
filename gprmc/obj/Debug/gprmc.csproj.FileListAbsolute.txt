@@ -1,0 +1,9 @@
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\bin\Debug\gprmc.exe.config
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\obj\Debug\gprmc.csprojResolveAssemblyReference.cache
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\obj\Debug\gprmc.Form1.resources
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\obj\Debug\gprmc.Properties.Resources.resources
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\obj\Debug\gprmc.csproj.GenerateResource.Cache
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\bin\Debug\gprmc.exe
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\bin\Debug\gprmc.pdb
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\obj\Debug\gprmc.exe
+c:\users\mike\documents\visual studio 2013\Projects\gprmc\gprmc\obj\Debug\gprmc.pdb
