@@ -10,7 +10,7 @@ namespace gprmc
     {
         String nmea_buf, nmea_buf2;
         String data;
-        int commacount, digitcount ;
+        int commacount, lastcomma, nextcomma;
         Boolean rightsentence;
         public Boolean gpsgood, gotsentence;
         public Double lat, lon, sog, cog;
@@ -31,94 +31,123 @@ namespace gprmc
 
         public Boolean processString(String sentence)
         {
-            int ii;
-            for (ii = 0; ii < sentence.Length; ii++) 
+            int ii,jj;
+            String chksent, chkmade;
+            int chkcalc;
+            byte[] asciisent;
+            ii = 0;
+            for (ii = 0; ii < sentence.Length; ii++)
             {
                 data = sentence.Substring(ii, 1);
                 switch (data)
                 {
                     case "$": // new sentence
-                        commacount = 0;
-                        digitcount = 0;
-                        rightsentence = false;
                         nmea_buf = ""; // clear data
-                        gpsgood = false;
                         break;
-                    case ",": // comma
-                        //nmea_buf[digitcount] = 0; // end string
-                        // process nmea_buf
-                        switch (commacount)
+                    case "\r": // end of sentence is  \r\n
+                        // checksum calculation
+                        if (nmea_buf.Substring(nmea_buf.Length - 3, 1).Equals("*"))
                         {
-                            case 0: // 'GPRMC' 
-                                rightsentence = nmea_buf.Equals("GPRMC"); // is that what we have?
-                                break;
-                            case 2: // A=Good, V=bad
-                                gpsgood = nmea_buf.Equals("A"); //
-                                break;
-                            case 3: // lat   ddmm.mmm  
-                                if (rightsentence)
-                                {
-                                    
-                                    lat = Convert.ToDouble(nmea_buf.Substring(0,2));
-                                    lat += Convert.ToDouble(nmea_buf.Substring(2)) / 60d;
-
-                         
-                                }
-                                break;
-                            case 4: // lat sign  
-                                if (rightsentence)
-                                {
-                                    if (nmea_buf.Equals("S"))
-                                    {// default to northern hemisphere
-                                        lat = -lat;
-                                    }
-                                }
-                                break;
-                            case 5: // lon dddmm.mmm
-                                if (rightsentence)
-                                {
-                                    lon = Convert.ToDouble(nmea_buf.Substring(0, 3));
-                                    lon += Convert.ToDouble(nmea_buf.Substring(3)) / 60d;
-                                 }
-                                break;
-                            case 6: // lon sign 
-                                if (rightsentence)
-                                {
-                                    if (nmea_buf.Equals("W"))
-                                    {// default to Eastern hemisphere
-                                        lon = -lon;
-                                    }
-                                 }
-                                break;
-                            case 7: // sog XXX.X kt
-                                if (rightsentence)
-                                {
-                                    sog = Convert.ToDouble(nmea_buf);
-                                }
-                                break;
-                            case 8: // cog XXX.X deg     
-                                if (rightsentence)
-                                {
-                                    sog = Convert.ToDouble(nmea_buf);
-                                    gotsentence = true;
-                                }
-                                break;
-                        } // switch commacount 
-                        digitcount = 0;
-                        nmea_buf = "";
-                        commacount++;
+                            // checksum exists
+                            chksent = nmea_buf.Substring(nmea_buf.Length - 2);
+                            asciisent = Encoding.ASCII.GetBytes(nmea_buf);
+                            // calculate checksum (Xor of chars between $ and *)
+                            chkcalc = 0;
+                            for (jj = 0; jj < nmea_buf.Length - 3; jj++)
+                            {
+                                chkcalc ^= asciisent[jj];
+                            }
+                            chkmade = chkcalc.ToString("X2");
+                            if (chkmade.Equals(chksent))
+                            {
+                                nmeaparse();
+                            }
+                        }
                         break;
                     default: // everything else  
                         nmea_buf += data;
-                        digitcount++;
-                        if (digitcount > 19) digitcount = 0;
                         break;
                 };  // switch data
 
             }
             return gotsentence;
-        }                
+        }
 
+        private void nmeaparse()
+        {
+            int ii;
+            commacount = 0;
+            nextcomma = -1;
+            for (ii = 0; ii < nmea_buf.Length; ii++)
+            {
+                data = nmea_buf.Substring(ii, 1);
+                if (data == ",")
+                {
+                    // save comma locations in string
+                    // there are probably string functions to do all this...
+                    lastcomma = nextcomma;
+                    nextcomma = ii;
+                    // this substring is the data between the commas
+                    nmea_buf2 = nmea_buf.Substring(lastcomma + 1, nextcomma - lastcomma - 1);
+                    switch (commacount)
+                    {
+                        case 0: // 'GPRMC' 
+                            rightsentence = nmea_buf2.Equals("GPRMC"); // is that what we have?
+                            break;
+                        case 2: // A=Good, V=bad
+                            gpsgood = nmea_buf2.Equals("A"); //
+                            break;
+                        case 3: // lat   ddmm.mmm  
+                            if (rightsentence && gpsgood)
+                            {
+                                lat = Convert.ToDouble(nmea_buf2.Substring(0, 2));
+                                lat += Convert.ToDouble(nmea_buf2.Substring(2)) / 60d;
+                            }
+                            break;
+                        case 4: // lat sign  
+                            if (rightsentence)
+                            {
+                                if (nmea_buf2.Equals("S"))
+                                {// default to northern hemisphere
+                                    lat = -lat;
+                                }
+                            }
+                            break;
+                        case 5: // lon dddmm.mmm
+                            if (rightsentence && gpsgood)
+                            {
+                                lon = Convert.ToDouble(nmea_buf2.Substring(0, 3));
+                                lon += Convert.ToDouble(nmea_buf2.Substring(3)) / 60d;
+                            }
+                            break;
+                        case 6: // lon sign 
+                            if (rightsentence)
+                            {
+                                if (nmea_buf2.Equals("W"))
+                                {// default to Eastern hemisphere
+                                    lon = -lon;
+                                }
+                            }
+                            break;
+                        case 7: // sog XXX.X kt
+                            if (rightsentence && gpsgood)
+                            {
+                                sog = Convert.ToDouble(nmea_buf2);
+                            }
+                            break;
+                        case 8: // cog XXX.X deg     
+                            if (rightsentence && gpsgood)
+                            {
+                                cog = Convert.ToDouble(nmea_buf2);
+                                gotsentence = true;
+                            }
+                            break;
+                    } // switch commacount 
+
+                    commacount++;
+                } // if ","
+            }
+        }
 
     }
 }

@@ -37,7 +37,7 @@ namespace gprmc
                     nmeastuff.gotsentence = false; // reset now that we've used the data
                 }
             }
-            if (nmeastuff.processString("205.4429,W,0.0,190.3,260702,15.1,E,A*3C"))
+            if (nmeastuff.processString("205.4429,W,0.0,190.3,260702,15.1,E,A*3C\r\n$GGGDDDH\r\n$GPRMC,233834,A,3759.842,N,12205.440,W,000.0,173.7,200602,015.8,E*63\r\n"))
             {
                 if (nmeastuff.gpsgood)
                 {
